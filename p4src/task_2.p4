@@ -67,12 +67,16 @@ const bit<8>  P4CALC_AND   = 0x26;   // '&'
 const bit<8>  P4CALC_OR    = 0x7c;   // '|'
 const bit<8>  P4CALC_CARET = 0x5e;   // '^'
 
+//entries based on above protocol header definition.
 header p4calc_t {
     bit<8> op;
-/*MODIFICAR AQUI
-*fill p4calc_t header with P, four, ver, op, operand_a, operand_b, and res 
-*entries based on above protocol header definition.
-*/
+    bit<8> P;
+    bit<8> four;
+    bit<8> ver;
+    bit<8> op;
+    bit<8> operand_a;
+    bit<8> operand_b;
+    bit<8> res;
 }
 
 /*
@@ -112,15 +116,12 @@ parser MyParser(packet_in packet,
     }
     
     state check_p4calc {
-    	/*MODIFICAR AQUI (just uncomment the following parse block)*/
-    	/*
         transition select(packet.lookahead<p4calc_t>().p,
         packet.lookahead<p4calc_t>().four,
         packet.lookahead<p4calc_t>().ver) {
             (P4CALC_P, P4CALC_4, P4CALC_VER) : parse_p4calc;
             default                          : accept;
         }
-        */
     }
     
     state parse_p4calc {
@@ -144,34 +145,38 @@ control MyIngress(inout headers hdr,
                   inout metadata meta,
                   inout standard_metadata_t standard_metadata) {
     action send_back(bit<32> result) {
-    	   /*MODIFICAR AQUI
-    	   * -put the result back in hdr.p4calc.res
-    	   * -swap MAC addresses in hdr.ethernet.dstAddr and
-    	   *  hdr.ethernet.srcAddr using a temp variable
-    	   * -Send the packet back to the port it came from
+    	   
+    	   // -put the result back in hdr.p4calc.res
+           hdr.p4calc.res = result;
+    	   // -swap MAC addresses in hdr.ethernet.dstAddr and hdr.ethernet.srcAddr using a temp variable
+           bit<48> tempAddr;
+           tempAddr = hdr.ethernet.dstAddr;
+           hdr.ethernet.dstAddr = hdr.ethernet.srcAddr;
+           hdr.ethernet.srcAddr = tempAddr;
+    	   /*  -Send the packet back to the port it came from
     	   	  by saving standard_metadata.ingress_port into
-    	   	  standard_metadata.egress_spec
-    	   	*/                 
+    	   	  standard_metadata.egress_spec */
+            standard_metadata.egress_spec = standard_metadata.ingress_port;
     }
     
     action operation_add() {
-           /*MODIFICAR AQUI call send_back with operand_a + operand_b*/
+           send_back( hdr.p4calc.operand_a + hdr.p4calc.operand_b);
     }
     
     action operation_sub() {
-           /*MODIFICAR AQUI call send_back with operand_a - operand_b*/
+           send_back( hdr.p4calc.operand_a - hdr.p4calc.operand_b);
     }
   
     action operation_and() {
-           /*MODIFICAR AQUI call send_back with operand_a & operand_b*/
+           send_back( hdr.p4calc.operand_a & hdr.p4calc.operand_b);
     }
     
     action operation_or() {
-           /*MODIFICAR AQUI call send_back with operand_a | operand_b*/
+           send_back( hdr.p4calc.operand_a | hdr.p4calc.operand_b);
     }
 
     action operation_xor() {
-           /*MODIFICAR AQUI call send_back with operand_a ^ operand_b*/
+           send_back( hdr.p4calc.operand_a ^ hdr.p4calc.operand_b);
     }
 
     action operation_drop() {

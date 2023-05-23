@@ -1,10 +1,10 @@
-# 1 "resposta/task_2.p4"
+# 1 "p4src/task_2.p4"
 # 1 "<built-in>"
 # 1 "<command-line>"
 # 1 "/usr/include/stdc-predef.h" 1 3 4
 # 1 "<command-line>" 2
-# 1 "resposta/task_2.p4"
-# 40 "resposta/task_2.p4"
+# 1 "p4src/task_2.p4"
+# 40 "p4src/task_2.p4"
 # 1 "/usr/local/bin/p4c/build/p4include/core.p4" 1
 # 23 "/usr/local/bin/p4c/build/p4include/core.p4"
 error {
@@ -64,7 +64,7 @@ match_kind {
 
     lpm
 }
-# 41 "resposta/task_2.p4" 2
+# 41 "p4src/task_2.p4" 2
 # 1 "/usr/local/bin/p4c/build/p4include/v1model.p4" 1
 # 22 "/usr/local/bin/p4c/build/p4include/v1model.p4"
 # 1 "/usr/local/bin/p4c/build/p4include/core.p4" 1
@@ -237,8 +237,8 @@ package V1Switch<H, M>(Parser<H, M> p,
                        ComputeChecksum<H, M> ck,
                        Deparser<H> dep
                        );
-# 42 "resposta/task_2.p4" 2
-# 50 "resposta/task_2.p4"
+# 42 "p4src/task_2.p4" 2
+# 50 "p4src/task_2.p4"
 header ethernet_t {
     bit<48> dstAddr;
     bit<48> srcAddr;
@@ -258,16 +258,17 @@ const bit<8> P4CALC_MINUS = 0x2d;
 const bit<8> P4CALC_AND = 0x26;
 const bit<8> P4CALC_OR = 0x7c;
 const bit<8> P4CALC_CARET = 0x5e;
-const bit<8> P4CALC_MUL = 0x2a;
+
 
 header p4calc_t {
-    bit<8> p;
+    bit<8> op;
+    bit<8> P;
     bit<8> four;
     bit<8> ver;
     bit<8> op;
-    bit<32> operand_a;
-    bit<32> operand_b;
-    bit<32> res;
+    bit<8> operand_a;
+    bit<8> operand_b;
+    bit<8> res;
 }
 
 
@@ -279,7 +280,7 @@ struct headers {
     ethernet_t ethernet;
     p4calc_t p4calc;
 }
-# 99 "resposta/task_2.p4"
+# 99 "p4src/task_2.p4"
 struct metadata {
 
 }
@@ -291,7 +292,6 @@ parser MyParser(packet_in packet,
                 out headers hdr,
                 inout metadata meta,
                 inout standard_metadata_t standard_metadata) {
-
     state start {
         packet.extract(hdr.ethernet);
         transition select(hdr.ethernet.etherType) {
@@ -329,45 +329,39 @@ control MyVerifyChecksum(inout headers hdr,
 control MyIngress(inout headers hdr,
                   inout metadata meta,
                   inout standard_metadata_t standard_metadata) {
-
     action send_back(bit<32> result) {
-           bit<48> tmp;
 
 
            hdr.p4calc.res = result;
 
-
-           tmp = hdr.ethernet.dstAddr;
+           bit<48> tempAddr;
+           tempAddr = hdr.ethernet.dstAddr;
            hdr.ethernet.dstAddr = hdr.ethernet.srcAddr;
-           hdr.ethernet.srcAddr = tmp;
+           hdr.ethernet.srcAddr = tempAddr;
 
 
-           standard_metadata.egress_spec = standard_metadata.ingress_port;
+
+            standard_metadata.egress_spec = standard_metadata.ingress_port;
     }
 
     action operation_add() {
-           send_back(hdr.p4calc.operand_a + hdr.p4calc.operand_b);
+           send_back( hdr.p4calc.operand_a + hdr.p4calc.operand_b);
     }
 
     action operation_sub() {
-           send_back(hdr.p4calc.operand_a - hdr.p4calc.operand_b);
-    }
-
-
-    action operation_mul() {
-           send_back(hdr.p4calc.operand_a * hdr.p4calc.operand_b);
+           send_back( hdr.p4calc.operand_a - hdr.p4calc.operand_b);
     }
 
     action operation_and() {
-           send_back(hdr.p4calc.operand_a & hdr.p4calc.operand_b);
+           send_back( hdr.p4calc.operand_a & hdr.p4calc.operand_b);
     }
 
     action operation_or() {
-           send_back(hdr.p4calc.operand_a | hdr.p4calc.operand_b);
+           send_back( hdr.p4calc.operand_a | hdr.p4calc.operand_b);
     }
 
     action operation_xor() {
-           send_back(hdr.p4calc.operand_a ^ hdr.p4calc.operand_b);
+           send_back( hdr.p4calc.operand_a ^ hdr.p4calc.operand_b);
     }
 
     action operation_drop() {
@@ -385,7 +379,6 @@ control MyIngress(inout headers hdr,
             operation_or;
             operation_xor;
             operation_drop;
-            operation_mul;
         }
         const default_action = operation_drop();
         const entries = {
@@ -394,7 +387,6 @@ control MyIngress(inout headers hdr,
             P4CALC_AND : operation_and();
             P4CALC_OR : operation_or();
             P4CALC_CARET: operation_xor();
-            P4CALC_MUL : operation_mul();
         }
     }
 
