@@ -1,0 +1,9 @@
+y
+%×É€MyIngress.calculate	calculatehdr.p4calc.op (Äá€Üƒ×éë­‚à›ëÇ€äñƒ ëÇ€@€P/
+-Äá€MyIngress.operation_addoperation_add/
+-ÜƒMyIngress.operation_suboperation_sub/
+-äñƒMyIngress.operation_muloperation_mul/
+-×éMyIngress.operation_andoperation_and-
++ë­‚MyIngress.operation_oroperation_or/
+-à›MyIngress.operation_xoroperation_xor1
+/ëÇ€MyIngress.operation_dropoperation_drop
